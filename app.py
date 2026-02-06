@@ -1,11 +1,16 @@
 import streamlit as st
-import openai
+import google.generativeai as genai
 import os
 from dotenv import load_dotenv
 
+# Load API key
 load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
+# Gemini model
+model = genai.GenerativeModel("gemini-1.5-flash")
+
+# Page config
 st.set_page_config(
     page_title="Nexus Lite",
     page_icon="🎓",
@@ -24,6 +29,7 @@ tabs = st.tabs([
 # ---------------- MAIL SUMMARIZER ----------------
 with tabs[0]:
     st.header("📩 AI Mail Summarizer")
+
     email_text = st.text_area(
         "Paste college email here",
         height=200,
@@ -32,23 +38,21 @@ with tabs[0]:
 
     if st.button("Summarize Email"):
         if email_text.strip():
-            with st.spinner("AI is reading your mail..."):
+            with st.spinner("AI is summarizing..."):
                 prompt = f"""
-                Summarize this college email in one sentence.
-                Categorize it (Exam / Event / Urgent / General).
-                Extract deadline if any.
+You are a campus assistant AI.
 
-                Email:
-                {email_text}
-                """
+Tasks:
+1. Summarize the email in ONE sentence
+2. Categorize it: Exam / Event / Urgent / General
+3. Extract deadline (if any)
 
-                response = openai.ChatCompletion.create(
-                    model="gpt-3.5-turbo",
-                    messages=[{"role": "user", "content": prompt}]
-                )
-
+Email:
+{email_text}
+"""
+                response = model.generate_content(prompt)
                 st.success("AI Summary")
-                st.write(response.choices[0].message.content)
+                st.write(response.text)
         else:
             st.warning("Please paste an email.")
 
@@ -58,30 +62,27 @@ with tabs[1]:
 
     menu = st.text_area(
         "Enter today's mess menu",
-        placeholder="Breakfast: Poha, Eggs\nLunch: Dal, Rice, Paneer\nDinner: Roti, Chicken",
-        height=150
+        height=150,
+        placeholder="Breakfast: Poha, Eggs\nLunch: Dal, Rice, Paneer\nDinner: Roti, Chicken"
     )
 
     if st.button("Get AI Recommendation"):
         if menu.strip():
             with st.spinner("Analyzing menu..."):
                 prompt = f"""
-                Given this mess menu:
-                1. Recommend best overall meal
-                2. Healthiest option
-                3. High protein choice
+You are a nutrition-aware campus AI.
 
-                Menu:
-                {menu}
-                """
+Given this mess menu:
+1. Recommend best overall meal
+2. Recommend healthiest option
+3. Recommend high-protein choice
 
-                response = openai.ChatCompletion.create(
-                    model="gpt-3.5-turbo",
-                    messages=[{"role": "user", "content": prompt}]
-                )
-
+Menu:
+{menu}
+"""
+                response = model.generate_content(prompt)
                 st.success("AI Recommendation")
-                st.write(response.choices[0].message.content)
+                st.write(response.text)
         else:
             st.warning("Please enter the menu.")
 
@@ -91,8 +92,8 @@ with tabs[2]:
 
     timetable = st.text_area(
         "Enter today's timetable",
-        placeholder="9-10: Maths\n10-11: Physics\n2-3: AI Lab",
-        height=150
+        height=150,
+        placeholder="9-10: Maths\n10-11: Physics\n2-3: AI Lab"
     )
 
     question = st.text_input(
@@ -104,19 +105,18 @@ with tabs[2]:
         if timetable.strip() and question.strip():
             with st.spinner("Thinking..."):
                 prompt = f"""
-                Timetable:
-                {timetable}
+You are an academic planning assistant.
 
-                Question:
-                {question}
-                """
+Timetable:
+{timetable}
 
-                response = openai.ChatCompletion.create(
-                    model="gpt-3.5-turbo",
-                    messages=[{"role": "user", "content": prompt}]
-                )
+Student Question:
+{question}
 
+Answer clearly and briefly.
+"""
+                response = model.generate_content(prompt)
                 st.success("AI Answer")
-                st.write(response.choices[0].message.content)
+                st.write(response.text)
         else:
-            st.warning("Enter timetable and question.")
+            st.warning("Please enter timetable and question.")
